@@ -9,7 +9,7 @@ void adBright(Mat &frame, double target_brightness)
 {
     Mat gray, thres;
     cvtColor(frame, gray, COLOR_BGR2GRAY);
-    threshold(gray, thres, 155, 255, THRESH_BINARY);
+    threshold(gray, thres, 140, 255, THRESH_BINARY);
 
     Scalar mean_value = mean(thres);
     double current_brightness = mean_value[0];
@@ -42,7 +42,7 @@ int main(void)
 
     Mat frame, gray, thres;
 
-    double target_brightness = 80.0;
+    double target_brightness = 100.0;
 
     while (true) {
         gettimeofday(&start, NULL);
@@ -53,7 +53,7 @@ int main(void)
         adBright(frame, target_brightness);
 
         cvtColor(frame, gray, COLOR_BGR2GRAY);
-        threshold(gray, thres, 155, 255, THRESH_BINARY);
+        threshold(gray, thres, 140, 255, THRESH_BINARY);
 
         save_video << thres;
         writer << thres;
