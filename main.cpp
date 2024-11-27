@@ -5,6 +5,8 @@
 using namespace cv;
 using namespace std;
 
+Point previousLineCenter(-1, -1);  // 이전 라인 중심 위치를 저장
+
 void adBright(Mat &frame, double target_brightness)
 {
     Mat gray;
@@ -29,6 +31,7 @@ void findLines(Mat &thr_cut, Mat &thres_cut)
 
     // 진짜 라인 후보를 필터링
     vector<Rect> trueLines;
+    vector<Point> lineCenters;
 
     for (int i = 1; i < nLabels; i++) {  // 0은 배경이므로 제외
         int area = stats.at<int>(i, CC_STAT_AREA);
@@ -40,12 +43,34 @@ void findLines(Mat &thr_cut, Mat &thres_cut)
         // 영역 필터링: 면적, 비율 등을 기준으로 진짜 라인으로 추정
         if (area > 100 && area < 5000) {
             trueLines.push_back(Rect(left, top, width, height));
+            // 라인 중심 계산
+            Point center(left + width / 2, top + height / 2);
+            lineCenters.push_back(center);
         }
     }
 
-    // 진짜 라인 후보를 이미지에 표시
-    for (const Rect& r : trueLines) {
-        rectangle(thr_cut, r, Scalar(0, 0, 255), 2);
+    // 라인 후보가 여러 개 있을 때, 이전 라인 중심과 가장 가까운 라인 선택
+    if (lineCenters.size() > 0) {
+        Point closestLineCenter;
+        if (previousLineCenter.x == -1 && previousLineCenter.y == -1) {
+            // 초기에는 첫 번째 라인을 선택
+            closestLineCenter = lineCenters[0];
+        } else {
+            double minDistance = DBL_MAX;
+            for (const Point &center : lineCenters) {
+                double distance = norm(center - previousLineCenter);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestLineCenter = center;
+                }
+            }
+        }
+
+        // 선택된 라인 중심을 이전 라인 중심으로 업데이트
+        previousLineCenter = closestLineCenter;
+
+        // 선택된 라인 중심 표시
+        circle(thr_cut, closestLineCenter, 2, Scalar(0, 0, 255), 2);
     }
 }
 
