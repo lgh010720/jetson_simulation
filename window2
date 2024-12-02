@@ -48,45 +48,57 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
         }
     }
 
-    // 라인 후보가 여러 개 있을 때, 이전 라인 중심과 가장 가까운 라인 선택
-    double maxAllowedDistance = 80.0;  // 최대 이동 거리 제한
-    if (!lineCenters.empty()) {
-        Point closestLineCenter;
+    // 초기 라인 중심 설정
+    if (previousLineCenter.x == -1 && previousLineCenter.y == -1) {
+        // 초기에 영상 중심에서 가장 가까운 라인을 선택
+        Point imageCenter(thr_cut.cols / 2, thr_cut.rows / 2);
         double minDistance = DBL_MAX;
 
         for (const Point& center : lineCenters) {
-            if (previousLineCenter.x != -1 && previousLineCenter.y != -1) {
-                double distance = norm(center - previousLineCenter);
-                if (distance < minDistance && distance <= maxAllowedDistance) {
-                    minDistance = distance;
-                    closestLineCenter = center;
-                }
-            }
-            else {
-                // 초기 상태에서는 첫 번째 라인을 선택
-                closestLineCenter = center;
-                minDistance = 0;  // 첫 프레임 처리
+            double distance = norm(center - imageCenter);
+            if (distance < minDistance) {
+                minDistance = distance;
+                previousLineCenter = center;
             }
         }
+    }
 
-        // 선택된 라인 중심을 이전 라인 중심으로 업데이트
-        if (minDistance <= maxAllowedDistance || previousLineCenter == Point(-1, -1)) {
-            previousLineCenter = closestLineCenter;
+    // 현재 프레임에서 라인을 선택
+    double maxAllowedDistance = 80.0;  // 최대 이동 거리 제한
+    Point closestLineCenter(-1, -1);
+    double minDistance = DBL_MAX;
 
-            // 선택된 라인 중심 표시
-            for (size_t i = 0; i < trueLines.size(); ++i) {
-                Rect rect = trueLines[i];
-                if (lineCenters[i] == closestLineCenter) {
-                    rectangle(thr_cut, rect, Scalar(0, 0, 255), 2); // 빨간색 바운딩 박스
-                    circle(thr_cut, closestLineCenter, 2, Scalar(0, 0, 255), 2); // 빨간색 점
-                }
-                else {
-                    rectangle(thr_cut, rect, Scalar(255, 0, 0), 1); // 파란색 바운딩 박스
-                }
+    for (const Point& center : lineCenters) {
+        double distance = norm(center - previousLineCenter);
+        if (distance < minDistance && distance <= maxAllowedDistance) {
+            minDistance = distance;
+            closestLineCenter = center;
+        }
+    }
+
+    // 선택된 라인 중심이 유효한 경우만 업데이트
+    if (minDistance <= maxAllowedDistance) {
+        previousLineCenter = closestLineCenter;
+    }
+
+    // 모든 라인 후보에 파란색 바운딩 박스 표시
+    for (size_t i = 0; i < trueLines.size(); ++i) {
+        Rect rect = trueLines[i];
+        rectangle(thr_cut, rect, Scalar(255, 0, 0), 1);  // 파란색 바운딩 박스
+    }
+
+    // 선택된 라인 중심에 빨간색 표시
+    if (closestLineCenter.x != -1 && closestLineCenter.y != -1) {
+        for (size_t i = 0; i < trueLines.size(); ++i) {
+            Rect rect = trueLines[i];
+            if (lineCenters[i] == closestLineCenter) {
+                rectangle(thr_cut, rect, Scalar(0, 0, 255), 2);  // 빨간색 바운딩 박스
+                circle(thr_cut, closestLineCenter, 2, Scalar(0, 0, 255), 2);  // 빨간색 점
             }
         }
     }
 }
+
 
 int main(void)
 {
@@ -119,7 +131,7 @@ int main(void)
 
     Mat frame, gray, thres, thr_bgr, thr_cut;
 
-    double target_brightness = 90.0;
+    double target_brightness = 100.0;
 
     while (true) {
         auto start = high_resolution_clock::now();
@@ -134,7 +146,7 @@ int main(void)
 
         // 그레이스케일로 변환하고 이진화
         cvtColor(frame, gray, COLOR_BGR2GRAY);
-        threshold(gray, thres, 150, 255, THRESH_BINARY);
+        threshold(gray, thres, 120, 255, THRESH_BINARY);
         cvtColor(thres, thr_bgr, COLOR_GRAY2BGR);
 
         Rect cut1(0, 270, 640, 90);
