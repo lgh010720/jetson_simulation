@@ -116,7 +116,7 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
 
 int main(void)
 {
-    VideoCapture source("7_lt_ccw_100rpm_in.mp4"); 
+    VideoCapture source("5_lt_cw_100rpm_out.mp4"); 
     if (!source.isOpened()) { cout << "Camera error" << endl; return -1; }
 
     // 두 개의 출력 스트림 설정
@@ -148,7 +148,7 @@ int main(void)
     double target_brightness = 90.0;
 
     bool mode = false;
-    double k = 0.5;
+    double k = 0.3;
 
     signal(SIGINT, ctrlc);  // 시그널 핸들러 지정
     if (!dxl.open()) { cout << "dxl open error" << endl; return -1; } // 장치 열기
@@ -180,7 +180,7 @@ int main(void)
         save_video << thr_bgr;
 
         // 라인 검출 후 lineError 값 사용
-        if (dxl.kbhit()) { // 없으면 제어 멈춤
+        if (dxl.kbhit()) {
             char ch = dxl.getch();
             if (ch == 'q'){
                 dxl.setVelocity(0, 0);
@@ -194,11 +194,15 @@ int main(void)
         double rightvel = -(100 + k * lineError);
 
         if (mode) dxl.setVelocity(leftvel, rightvel);
-        if (ctrl_c_pressed) break;
+        if (ctrl_c_pressed){
+                dxl.setVelocity(0, 0);
+                break;
+            } 
 
         gettimeofday(&end1, NULL);
         time1 = end1.tv_sec - start.tv_sec + (end1.tv_usec - start.tv_usec) / 1000000.0;
         cout << "Time: " << time1 << " seconds" << endl;
+        cout << "left: " << leftvel << ", right: " << rightvel << endl;
     }
 
     return 0;
