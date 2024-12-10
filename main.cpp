@@ -59,12 +59,12 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
 
     // 초기 라인 중심 설정
     Point imageCenter(thr_cut.cols / 2, thr_cut.rows / 2);  // 영상 중심
-    if (previousLineCenter.x == -1 && previousLineCenter.y == -1) {
+    if (previousLineCenter.x == -1 && previousLineCenter.y == -1) {//변수가 초기상태인지 확인 
         // 초기에 영상 중심에서 가장 가까운 라인을 선택
         double minDistance = 10000;
 
         for (const Point& center : lineCenters) {
-            double distance = norm(center - imageCenter);
+            double distance = norm(center - imageCenter) ; //영상중심, 라인중심 거리계산
             if (distance < minDistance) {
                 minDistance = distance;
                 previousLineCenter = center;
@@ -74,15 +74,15 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
 
     // 현재 프레임에서 라인을 선택
     double maxAllowedDistance = 80.0;  // 최대 이동 거리 제한
-    Point closestLineCenter(-1, -1);
+    Point closestLineCenter(-1, -1); 
     double minDistance = 10000;
 
     for (const Point& center : lineCenters) {
-        double distance = norm(center - previousLineCenter);
+        double distance = norm(center - previousLineCenter); //영상 중심, 이전 라인중심 거리계산
         if (distance < minDistance && distance <= maxAllowedDistance) {
             minDistance = distance;
             closestLineCenter = center;
-        }
+        } 
     }
 
     // 선택된 라인 중심이 유효한 경우만 업데이트
@@ -119,7 +119,7 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
 
 int main(void)
 {
-    VideoCapture source("5_lt_cw_100rpm_out.mp4"); 
+    VideoCapture source("7_lt_ccw_100rpm_in.mp4"); 
     if (!source.isOpened()) { cout << "Camera error" << endl; return -1; }
 
     // 두 개의 출력 스트림 설정
