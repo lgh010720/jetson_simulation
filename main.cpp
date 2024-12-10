@@ -7,8 +7,11 @@ using namespace cv;
 using namespace std;
 
 Point previousLineCenter(-1, -1);  // 이전 라인 중심 위치를 저장
-bool ctrl_c_pressed;
-void ctrlc(int){ ctrl_c_pressed = true; }
+bool ctrl_c_pressed = false;
+void ctrlc(int)
+{
+    ctrl_c_pressed = true;
+}
 
 int lineError = 0;
 
@@ -45,7 +48,7 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
         int width = stats.at<int>(i, CC_STAT_WIDTH);
         int height = stats.at<int>(i, CC_STAT_HEIGHT);
 
-        // 영역 필터링: 면적, 비율 등을 기준으로 진짜 라인으로 추정
+        // 영역 필터링: 면적을 기준으로 진짜 라인으로 추정
         if (area > 100 && area < 5000) {
             trueLines.push_back(Rect(left, top, width, height));
             // 라인 중심 계산
@@ -58,7 +61,7 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
     Point imageCenter(thr_cut.cols / 2, thr_cut.rows / 2);  // 영상 중심
     if (previousLineCenter.x == -1 && previousLineCenter.y == -1) {
         // 초기에 영상 중심에서 가장 가까운 라인을 선택
-        double minDistance = DBL_MAX;
+        double minDistance = 10000;
 
         for (const Point& center : lineCenters) {
             double distance = norm(center - imageCenter);
@@ -72,7 +75,7 @@ void findLines(Mat& thr_cut, Mat& thres_cut)
     // 현재 프레임에서 라인을 선택
     double maxAllowedDistance = 80.0;  // 최대 이동 거리 제한
     Point closestLineCenter(-1, -1);
-    double minDistance = DBL_MAX;
+    double minDistance = 10000;
 
     for (const Point& center : lineCenters) {
         double distance = norm(center - previousLineCenter);
@@ -148,11 +151,10 @@ int main(void)
     double target_brightness = 90.0;
 
     bool mode = false;
-    double k = 0.3;
+    double k = 0.15;
 
     signal(SIGINT, ctrlc);  // 시그널 핸들러 지정
     if (!dxl.open()) { cout << "dxl open error" << endl; return -1; } // 장치 열기
-
     while (true) {
         gettimeofday(&start, NULL);
 
@@ -180,7 +182,7 @@ int main(void)
         save_video << thr_bgr;
 
         // 라인 검출 후 lineError 값 사용
-        if (dxl.kbhit()) {
+        if (dxl.kbhit()) { // 없으면 제어 멈춤
             char ch = dxl.getch();
             if (ch == 'q'){
                 dxl.setVelocity(0, 0);
@@ -189,9 +191,10 @@ int main(void)
             else if (ch == 's') mode = true;
         }
 
+        double leftvel = 0, rightvel = 0;
         // lineError를 기반으로 속도 조정
-        double leftvel = 100 - k * lineError;
-        double rightvel = -(100 + k * lineError);
+        leftvel = 100 - k * lineError;
+        rightvel = -(100 + k * lineError);
 
         if (mode) dxl.setVelocity(leftvel, rightvel);
         if (ctrl_c_pressed){
