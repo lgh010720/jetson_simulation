@@ -16,4 +16,6 @@ https://youtu.be/vza8JRLOCS0
 
     void findLines(Mat& thr_cut, Mat& thres_cut)
 
-면적을 기준으로 라인 후보 영역을 색출
+면적을 기준으로 라인 후보 영역을 색출, 영역의 무게중심 계산
+
+이미지의 중심을 계산, 이미지 중심과 영역의 무게중심의 차이 계산
