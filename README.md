@@ -16,3 +16,4 @@ https://youtu.be/vza8JRLOCS0
 
     void findLines(Mat& thr_cut, Mat& thres_cut)
 
+면적을 기준으로 라인 후보 영역을 색출
