@@ -151,7 +151,7 @@ int main(void)
     double target_brightness = 90.0;
 
     bool mode = false;
-    double k = 0.15;
+    double k = 0.14;
 
     signal(SIGINT, ctrlc);  // 시그널 핸들러 지정
     if (!dxl.open()) { cout << "dxl open error" << endl; return -1; } // 장치 열기
